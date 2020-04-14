@@ -39,6 +39,7 @@ playerSprite = pyglet.sprite.Sprite(playerStill, x=32, y=103, group=foreground)
 icon1 = pyglet.resource.image("16x16.png")
 icon2 = pyglet.resource.image("32x32.png")
 
+
 pressedKeys = {}
 alive = 1
 moving = False
@@ -71,9 +72,8 @@ class Window(pyglet.window.Window):
         self.create_ground()
         self.drawGround()
         playerSprite.draw()
-        print("FPS: " + str(round(pyglet.clock.get_fps(), 2)))
-        print("X Speed: " + str(xVel))
-        print("Y Speed: " + str(yVel))
+        fpsDisplay = pyglet.text.Label("FPS: " + str(round(pyglet.clock.get_fps(), 1)), font_size = 20, x = 10, y = 690, color = (0,0,0,255))
+        fpsDisplay.draw()
 
     def on_key_release(dt, symbol, modifiers):
         try:
@@ -210,21 +210,17 @@ class Window(pyglet.window.Window):
             oppositeIntersectRight = playerRightSide.intersection(oppositeGroundLeftSide)
             oppositeIntersectLeft = playerLeftSide.intersection(oppositeGroundRightSide)
             if intersectBottom or oppositeIntersectBottom:
-                print("Bottom Collision")
                 playerSprite.y = currentY + 67
                 onFloor = True
                 while yVel < 0:
                     yVel += 0.25
             if intersectTop or oppositeIntersectTop:
-                print("Top Collision")
                 playerSprite.y = currentY - 67
             if intersectRight or oppositeIntersectRight:
-                print("Right Collision")
                 playerSprite.x = currentX - 67
                 if xVel > 0:
                     xVel = 0
             if intersectLeft or oppositeIntersectLeft:
-                print("Left Collision")
                 playerSprite.x = currentX + 67
                 if xVel < 0:
                     xVel = 0
