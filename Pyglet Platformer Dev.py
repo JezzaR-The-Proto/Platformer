@@ -1,7 +1,8 @@
-import pyglet, os, datetime, random, math
+import pyglet, os, datetime, random, math, shapely
 from pyglet.window import key
 from pyglet import clock
 from random import randint
+from shapely.geometry import LineString, Point
 
 gameFolder = os.path.dirname(os.path.realpath(__file__))
 assetsFolder = os.path.join(gameFolder,"assets")
@@ -63,7 +64,6 @@ class Window(pyglet.window.Window):
         self.check_bounds(playerSprite)
 
     def on_draw(self):
-        global currentGround
         pyglet.clock.tick()
         self.clear()
         skySprite.draw()
@@ -71,9 +71,9 @@ class Window(pyglet.window.Window):
         self.drawGround()
         playerSprite.draw()
         self.collision()
-        print("FPS: " + str(round(pyglet.clock.get_fps(), 2)))
-        print("X Speed: " + str(xVel))
-        print("Y Speed: " + str(yVel))
+        #print("FPS: " + str(round(pyglet.clock.get_fps(), 2)))
+        #print("X Speed: " + str(xVel))
+        #print("Y Speed: " + str(yVel))
 
     def on_key_release(dt, symbol, modifiers):
         try:
@@ -169,6 +169,7 @@ class Window(pyglet.window.Window):
                 y = 35
                 groundPoses.append(x)
                 groundPoses.append(y)
+                groundPoses.append(groundTexture)
                 currentGround[groundCount] = f"{x},{y}"
                 groundCount += 1
                 x += 70
@@ -178,6 +179,7 @@ class Window(pyglet.window.Window):
                     y = 35
                     groundPoses.append(x)
                     groundPoses.append(y)
+                    groundPoses.append(groundTexture)
                     currentGround[groundCount] = f"{x},{y},{groundTexture}"
                     groundCount += 1
                     x += 70
@@ -185,21 +187,48 @@ class Window(pyglet.window.Window):
                     y = 105
                     groundPoses.append(x)
                     groundPoses.append(y)
+                    groundPoses.append(grassTexture)
                     currentGround[groundCount] = f"{x},{y},{groundTexture}"
                     groundCount += 1
                     y = 35
                     groundPoses.append(x)
                     groundPoses.append(y)
+                    groundPoses.append(dirtTexture)
                     currentGround[groundCount] = f"{x},{y},{dirtTexture}"
                     groundCount += 1
                     x += 70
 
     def collision(dt):
         global currentGround, xVel, yVel, onWallRight, onWallLeft, onFloor
-        playerTopSide = {(playerSprite.x-32, playerSprite.y+32),(playerSprite.x+32, playerSprite.y+32)}
-        playerRightSide = {(playerSprite.x-32, playerSprite.y+32),(playerSprite.x-32, playerSprite.y-32)}
-        playerBottomSide = {(playerSprite.x-32, playerSprite.y-32),(playerSprite.x+32, playerSprite.y-32)}
-        playerLeftSide = {(playerSprite.x+32, playerSprite.y-32),(playerSprite.x+32, playerSprite.y+32)}
+        RightTop = Point(playerSprite.x+32, playerSprite.y+32)
+        RightBottom = Point(playerSprite.x+32, playerSprite.y-32)
+        LeftTop = Point(playerSprite.x-32, playerSprite.y+32)
+        LeftBottom = Point(playerSprite.x-32, playerSprite.y-32)
+        playerTopSide = LineString([LeftTop,RightTop])
+        playerRightSide = LineString([RightTop,RightBottom])
+        playerBottomSide = LineString([LeftBottom,RightBottom])
+        playerLeftSide = LineString([LeftTop,LeftBottom])
+        print(playerBottomSide)
+        y = 0
+        for pos in groundPoses:
+            if y == 0:
+                currentX = pos
+                y = 1
+            elif y == 1:
+                currentY = pos
+                y = 2
+            else:
+                groundTopSide = LineString([(currentX-32, currentY+32),(currentX+32, currentY+16)])
+                groundLeftSide = LineString([(currentX-16, currentY+32),(currentX-32, currentY-32)])
+                groundBottomSide = LineString([(currentX-32, currentY-16),(currentX+32, currentY-32)])
+                groundRightSide = LineString([(currentX+16, currentY-32),(currentX+32, currentY+32)])
+                intersect = playerBottomSide.intersection(groundTopSide)
+                if intersect.x:
+                    playerSprite.y = currentY+32
+                    yVel = 0
+                y = 0
+
+
 
     def drawGround(dt):
         coord = 0
@@ -211,7 +240,7 @@ class Window(pyglet.window.Window):
             elif coord == 1:
                 groundSprite.y = pos
                 coord = 2
-            elif coord == 2:
+            else:
                 groundSprite.image = pos
                 coord = 0
                 groundSprite.draw()
