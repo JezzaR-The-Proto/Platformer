@@ -58,9 +58,9 @@ class Window(pyglet.window.Window):
     def __init__(self):
         super(Window, self).__init__(width = width, height = height, vsync = True, caption="Platformer")
         self.set_icon(icon1,icon2)
-        pyglet.clock.schedule_interval(self.update, 1.0/round(pyglet.clock.get_fps(), 2))
-        pyglet.clock.schedule_interval(self.physics, 1.0/round(pyglet.clock.get_fps(), 2))
-        pyglet.clock.schedule_interval(self.collision, 1.0/round(pyglet.clock.get_fps(), 2))
+        pyglet.clock.schedule_interval(self.update, 1.0/120.0)
+        pyglet.clock.schedule_interval(self.physics, 1.0/120.0)
+        pyglet.clock.schedule_interval(self.collision, 1.0/120.0)
 
     def update(self, dt):
         self.check_bounds(playerSprite)
