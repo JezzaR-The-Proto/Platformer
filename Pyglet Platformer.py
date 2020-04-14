@@ -1,7 +1,8 @@
-import pyglet, os, datetime, random, math
+import pyglet, os, datetime, random, math, shapely
 from pyglet.window import key
 from pyglet import clock
 from random import randint
+from shapely.geometry import LineString, Point
 
 gameFolder = os.path.dirname(os.path.realpath(__file__))
 assetsFolder = os.path.join(gameFolder,"assets")
@@ -58,19 +59,18 @@ class Window(pyglet.window.Window):
         self.set_icon(icon1,icon2)
         pyglet.clock.schedule_interval(self.update, 1.0/120.0)
         pyglet.clock.schedule_interval(self.physics, 1.0/120.0)
+        pyglet.clock.schedule_interval(self.collision, 1.0/120.0)
 
     def update(self, dt):
         self.check_bounds(playerSprite)
 
     def on_draw(self):
-        global currentGround
         pyglet.clock.tick()
         self.clear()
         skySprite.draw()
         self.create_ground()
         self.drawGround()
         playerSprite.draw()
-        self.collision()
         print("FPS: " + str(round(pyglet.clock.get_fps(), 2)))
         print("X Speed: " + str(xVel))
         print("Y Speed: " + str(yVel))
@@ -90,46 +90,25 @@ class Window(pyglet.window.Window):
         global xVel, yVel, moving, onWallRight, onWallLeft, onFloor
         moving = False
         if key.W in pressedKeys:
-            if onWallRight:
-                yVel = 7.5
-                xVel = -5
-                playerSprite.image = playerUp
-                moving = True
-                onWallRight = False
-            elif onWallLeft:
-                yVel = 7.5
-                xVel = 5
-                playerSprite.image = playerUp
-                moving = True
-                onWallLeft = False
-            elif onFloor:
+            if onFloor:
                 yVel = 7.5
                 playerSprite.image = playerUp
                 moving = True
                 onFloor = False
-            moving = True
-        if key.S in pressedKeys:
-            yVel -= 2
-            playerSprite.image = playerDown
-            moving = True
         if key.A in pressedKeys:
-            if xVel == 0:
-                xVel = -1
-            else:
-                xVel -= 1
+            xVel -= 1
             playerSprite.image = playerLeft
             moving = True
         if key.D in pressedKeys:
-            if xVel == 0:
-                xVel = 1
-            else:
-                xVel += 1
+            xVel += 1
             playerSprite.image = playerRight
             moving = True
         if (playerSprite.y) == 720:
             playerSprite.y = 656
         xVel = xVel * 0.85
         yVel -= 0.25
+        if yVel == -5:
+            yVel = -5
         if xVel < 0.01 and xVel > -0.01:
             xVel = 0
         if yVel < 0.01 and yVel > -0.01:
@@ -169,7 +148,8 @@ class Window(pyglet.window.Window):
                 y = 35
                 groundPoses.append(x)
                 groundPoses.append(y)
-                currentGround[groundCount] = f"{x},{y},{groundTexture}"
+                groundPoses.append(groundTexture)
+                currentGround[groundCount] = f"{x},{y}"
                 groundCount += 1
                 x += 70
         elif level == 2:
@@ -178,68 +158,89 @@ class Window(pyglet.window.Window):
                     y = 35
                     groundPoses.append(x)
                     groundPoses.append(y)
+                    groundPoses.append(groundTexture)
                     currentGround[groundCount] = f"{x},{y},{groundTexture}"
                     groundCount += 1
                     x += 70
                 else:
                     y = 105
-                    groundPoses.append(x)/
+                    groundPoses.append(x)
                     groundPoses.append(y)
+                    groundPoses.append(groundTexture)
                     currentGround[groundCount] = f"{x},{y},{groundTexture}"
                     groundCount += 1
                     y = 35
                     groundPoses.append(x)
                     groundPoses.append(y)
+                    groundPoses.append(dirtTexture)
                     currentGround[groundCount] = f"{x},{y},{dirtTexture}"
                     groundCount += 1
                     x += 70
 
-    def collision(dt):
-        global currentGround, xVel, yVel, onWallRight, onWallLeft, onFloor
-        xPos = playerSprite.x
-        yPos = playerSprite.y
-        y = 0
-        while y < len(currentGround):
-            xCol = int(currentGround[y].split(",")[0])
-            yCol = int(currentGround[y].split(",")[1])
-            xDist = (xPos+32)-(xCol-35)
-            if xDist < 1 and xDist > -4:
-                if yPos > (yCol-34) and yPos < (yCol+34):
-                    playerSprite.x = xCol-68
-                    onWallRight = True
+    def collision(dt, dts):
+        global yVel, onFloor, xVel
+        RightTop = Point(playerSprite.x+32, playerSprite.y+32)
+        RightBottom = Point(playerSprite.x+32, playerSprite.y-32)
+        LeftTop = Point(playerSprite.x-32, playerSprite.y+32)
+        LeftBottom = Point(playerSprite.x-32, playerSprite.y-32)
+        playerTopSide = LineString([LeftTop,RightTop])
+        playerRightSide = LineString([RightTop,RightBottom])
+        playerBottomSide = LineString([LeftBottom,RightBottom])
+        playerLeftSide = LineString([LeftTop,LeftBottom])
+        coord = 0
+        getPos = 0
+        while getPos < len(groundPoses):
+            currentX = groundPoses[getPos]
+            currentY = groundPoses[getPos+1]
+            getPos += 3
+            groundTopSide = LineString([(currentX-35, currentY+35),(currentX+35, currentY+29)])
+            groundLeftSide = LineString([(currentX-25, currentY+35),(currentX-35, currentY-35)])
+            groundBottomSide = LineString([(currentX-35, currentY-30),(currentX+35, currentY-35)])
+            groundRightSide = LineString([(currentX+25, currentY-35),(currentX+35, currentY+35)])
+            oppositeGroundTopSide = LineString([(currentX-35, currentY+29),(currentX+35, currentY+35)])
+            oppositeGroundLeftSide = LineString([(currentX-35, currentY+35),(currentX-25, currentY-35)])
+            oppositeGroundBottomSide = LineString([(currentX-35, currentY-35),(currentX+35, currentY-30)])
+            oppositeGroundRightSide = LineString([(currentX+35, currentY-35),(currentX+25, currentY+35)])
+            intersectBottom = playerBottomSide.intersection(groundTopSide)
+            intersectTop = playerTopSide.intersection(groundBottomSide)
+            intersectRight = playerRightSide.intersection(groundLeftSide)
+            intersectLeft = playerLeftSide.intersection(groundRightSide)
+            oppositeIntersectBottom = playerBottomSide.intersection(oppositeGroundTopSide)
+            oppositeIntersectTop = playerTopSide.intersection(oppositeGroundBottomSide)
+            oppositeIntersectRight = playerRightSide.intersection(oppositeGroundLeftSide)
+            oppositeIntersectLeft = playerLeftSide.intersection(oppositeGroundRightSide)
+            if intersectBottom or oppositeIntersectBottom:
+                print("Bottom Collision")
+                playerSprite.y = currentY + 67
+                onFloor = True
+                while yVel < 0:
+                    yVel += 0.25
+            if intersectTop or oppositeIntersectTop:
+                print("Top Collision")
+                playerSprite.y = currentY - 67
+            if intersectRight or oppositeIntersectRight:
+                print("Right Collision")
+                playerSprite.x = currentX - 67
+                if xVel > 0:
                     xVel = 0
-            yDist = (yPos-32)-(yCol+35)
-            if yDist < 3 and yDist > -20:
-                if xPos > (xCol-35) and xPos < (xCol+35):
-                    playerSprite.y = yCol+67
-                    onFloor = True
-                    yVel = 0
-            xDist = (xPos-32)-(xCol+35)
-            if xDist < 1 and xDist > -4:
-                if yPos > (yCol-34) and yPos < (yCol+34):
-                    playerSprite.x = xCol+68
-                    onWallLeft = True
+            if intersectLeft or oppositeIntersectLeft:
+                print("Left Collision")
+                playerSprite.x = currentX + 67
+                if xVel < 0:
                     xVel = 0
-            yDist = (yPos+32)-(yCol-35)
-            if yDist < 3 and yDist > -20:
-                if xPos > (xCol-35) and xPos < (xCol+35):
-                    playerSprite.y = yCol-68
-                    yVel = 0
-            playerSprite.draw()
-            y += 1
 
     def drawGround(dt):
         coord = 0
         groundSprite = pyglet.sprite.Sprite(groundTexture, group=background)
-        for attrib in groundPoses:
+        for pos in groundPoses:
             if coord == 0:
-                groundSprite.x = attrib
+                groundSprite.x = pos
                 coord = 1
             elif coord == 1:
-                groundSprite.y = attrib
+                groundSprite.y = pos
                 coord = 2
-            elif coord == 2:
-                groundSprite.image = attrib
+            else:
+                groundSprite.image = pos
                 coord = 0
                 groundSprite.draw()
 
