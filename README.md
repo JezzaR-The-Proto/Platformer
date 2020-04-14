@@ -7,4 +7,5 @@
  - Pyglet and Shapely Libraries (pip install pyglet shapely)
 ## Installation
  Clone the Git Repo.
+ 
  Run the "Pyglet Platformer.py" or "Pyglet Platformer Dev.py" if you want the dev builds (usually broken).
