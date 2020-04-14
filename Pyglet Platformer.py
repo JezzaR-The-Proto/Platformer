@@ -72,7 +72,7 @@ class Window(pyglet.window.Window):
         self.create_ground()
         self.drawGround()
         playerSprite.draw()
-        fpsDisplay = pyglet.text.Label("FPS: " + str(round(pyglet.clock.get_fps(), 2)), font_size = 20, x = 10, y = 690)
+        fpsDisplay = pyglet.text.Label("FPS: " + str(round(pyglet.clock.get_fps(), 2)), font_size = 20, x = 10, y = 690, color = (0,0,0,255))
         fpsDisplay.draw()
 
     def on_key_release(dt, symbol, modifiers):
