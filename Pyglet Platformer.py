@@ -15,7 +15,7 @@ height = 720
 sky = pyglet.graphics.OrderedGroup(2)
 background = pyglet.graphics.OrderedGroup(1)
 foreground = pyglet.graphics.OrderedGroup(0)
-groundTexture = pyglet.resource.image("grass.png")
+grassTexture = pyglet.resource.image("grass.png")
 dirtTexture = pyglet.resource.image("dirt.png")
 skyTexture = pyglet.resource.image("sky.png")
 skySprite = pyglet.sprite.Sprite(skyTexture, x=0, y=0, group=sky)
@@ -30,7 +30,7 @@ playerTextures.append(playerUp)
 playerTextures.append(playerDown)
 playerTextures.append(playerLeft)
 playerTextures.append(playerRight)
-playerTextures.append(groundTexture)
+playerTextures.append(grassTexture)
 playerTextures.append(dirtTexture)
 for tex in playerTextures:
     tex.anchor_x = tex.width // 2
@@ -148,7 +148,7 @@ class Window(pyglet.window.Window):
                 y = 35
                 groundPoses.append(x)
                 groundPoses.append(y)
-                groundPoses.append(groundTexture)
+                groundPoses.append(grassTexture)
                 currentGround[groundCount] = f"{x},{y}"
                 groundCount += 1
                 x += 70
@@ -158,16 +158,16 @@ class Window(pyglet.window.Window):
                     y = 35
                     groundPoses.append(x)
                     groundPoses.append(y)
-                    groundPoses.append(groundTexture)
-                    currentGround[groundCount] = f"{x},{y},{groundTexture}"
+                    groundPoses.append(grassTexture)
+                    currentGround[groundCount] = f"{x},{y},{grassTexture}"
                     groundCount += 1
                     x += 70
                 else:
                     y = 105
                     groundPoses.append(x)
                     groundPoses.append(y)
-                    groundPoses.append(groundTexture)
-                    currentGround[groundCount] = f"{x},{y},{groundTexture}"
+                    groundPoses.append(grassTexture)
+                    currentGround[groundCount] = f"{x},{y},{grassTexture}"
                     groundCount += 1
                     y = 35
                     groundPoses.append(x)
@@ -227,7 +227,7 @@ class Window(pyglet.window.Window):
 
     def drawGround(dt):
         coord = 0
-        groundSprite = pyglet.sprite.Sprite(groundTexture, group=background)
+        groundSprite = pyglet.sprite.Sprite(grassTexture, group=background)
         for pos in groundPoses:
             if coord == 0:
                 groundSprite.x = pos
