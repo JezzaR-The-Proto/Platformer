@@ -1,4 +1,4 @@
-import pyglet, os, datetime, random, math, shapely
+import pyglet, os, datetime, random, math, shapely, json, time
 from pyglet.window import key
 from pyglet import clock
 from random import randint
@@ -7,6 +7,7 @@ from shapely.geometry import LineString, Point
 gameFolder = os.path.dirname(os.path.realpath(__file__))
 assetsFolder = os.path.join(gameFolder,"assets")
 pyglet.resource.path = [assetsFolder]
+levelFolder = os.path.join(gameFolder, "levels")
 pyglet.options['audio'] = ('openal', 'pulse', 'directsound', 'silent')
 
 width = 1280
@@ -35,7 +36,7 @@ playerTextures.append(dirtTexture)
 for tex in playerTextures:
     tex.anchor_x = tex.width // 2
     tex.anchor_y = tex.height // 2
-playerSprite = pyglet.sprite.Sprite(playerStill, x=32, y=103, group=foreground)
+playerSprite = pyglet.sprite.Sprite(playerStill, x=100, y=200, group=foreground)
 icon1 = pyglet.resource.image("16x16.png")
 icon2 = pyglet.resource.image("32x32.png")
 
@@ -51,6 +52,9 @@ level = 1
 onWallLeft = False
 onWallRight = False
 onFloor = True
+levelData = {}
+extras = False
+drawLevel = True
 
 # The game window
 class Window(pyglet.window.Window):
@@ -60,20 +64,26 @@ class Window(pyglet.window.Window):
         self.set_icon(icon1,icon2)
         pyglet.clock.schedule_interval(self.update, 1.0/120.0)
         pyglet.clock.schedule_interval(self.physics, 1.0/120.0)
+        self.change_level()
         pyglet.clock.schedule_interval(self.collision, 1.0/120.0)
 
     def update(self, dt):
         self.check_bounds(playerSprite)
 
     def on_draw(self):
+        global xVel, yVel, extras, drawLevel, blockBatch
         pyglet.clock.tick()
-        self.clear()
         skySprite.draw()
-        self.create_ground()
-        self.drawGround()
+        self.draw_ground()
+        playerSprite.update(x = round(playerSprite.x + xVel, 0), y = round(playerSprite.y + yVel, 0))
         playerSprite.draw()
-        fpsDisplay = pyglet.text.Label("FPS: " + str(round(pyglet.clock.get_fps(), 2)), font_size = 20, x = 10, y = 690, color = (0,0,0,255))
-        fpsDisplay.draw()
+        if extras:
+            fpsDisplay = pyglet.text.Label("FPS: " + str(round(pyglet.clock.get_fps(), 2)), font_size = 10, x = 10, y = 700, color = (0,0,0,255))
+            fpsDisplay.draw()
+            xVelDisplay = pyglet.text.Label("X Velocity: " + str(xVel), font_size=10, x=10, y=680, color = (0,0,0,255))
+            xVelDisplay.draw()
+            yVelDisplay = pyglet.text.Label("Y Velocity: " + str(yVel), font_size=10, x=10, y=660, color = (0,0,0,255))
+            yVelDisplay.draw()
 
     def on_key_release(dt, symbol, modifiers):
         try:
@@ -82,14 +92,20 @@ class Window(pyglet.window.Window):
             pass
 
     def on_key_press(dt, symbol, modifiers):
+        global extras
         if symbol == key.ESCAPE:
             pyglet.app.exit()
+        if symbol == key.F3:
+            if extras:
+                extras = False
+            else:
+                extras = True
         pressedKeys[symbol] = True
 
     def physics(dt, dts):
         global xVel, yVel, moving, onWallRight, onWallLeft, onFloor
         moving = False
-        if key.W in pressedKeys:
+        if key.W in pressedKeys or key.SPACE in pressedKeys:
             if onFloor:
                 yVel = 7.5
                 playerSprite.image = playerUp
@@ -115,10 +131,8 @@ class Window(pyglet.window.Window):
             yVel = 0
         if not(moving):
             playerSprite.image = playerStill
-        playerSprite.x += xVel
-        playerSprite.y += yVel
 
-    def check_bounds(dt, spriteNam):
+    def check_bounds(self, spriteNam):
         global xVel, yVel, level
         min_x = 32
         max_x = 1252
@@ -129,6 +143,7 @@ class Window(pyglet.window.Window):
         elif spriteNam.x > max_x:
             spriteNam.x = min_x
             level += 1
+            self.change_level()
         if spriteNam.y > max_y:
             spriteNam.y = max_y
             yVel = 0
@@ -137,45 +152,6 @@ class Window(pyglet.window.Window):
             spriteNam.x = min_x
             yVel = 0
             xVel = 0
-
-    def create_ground(dt):
-        global currentGround, level, groundPoses
-        x = 35
-        groundCount = 0
-        groundPoses = []
-        if level == 1:
-            while x < 1315:
-                y = 35
-                groundPoses.append(x)
-                groundPoses.append(y)
-                groundPoses.append(groundTexture)
-                currentGround[groundCount] = f"{x},{y}"
-                groundCount += 1
-                x += 70
-        elif level == 2:
-            while x < 1315:
-                if x != 665:
-                    y = 35
-                    groundPoses.append(x)
-                    groundPoses.append(y)
-                    groundPoses.append(groundTexture)
-                    currentGround[groundCount] = f"{x},{y},{groundTexture}"
-                    groundCount += 1
-                    x += 70
-                else:
-                    y = 105
-                    groundPoses.append(x)
-                    groundPoses.append(y)
-                    groundPoses.append(groundTexture)
-                    currentGround[groundCount] = f"{x},{y},{groundTexture}"
-                    groundCount += 1
-                    y = 35
-                    groundPoses.append(x)
-                    groundPoses.append(y)
-                    groundPoses.append(dirtTexture)
-                    currentGround[groundCount] = f"{x},{y},{dirtTexture}"
-                    groundCount += 1
-                    x += 70
 
     def collision(dt, dts):
         global yVel, onFloor, xVel
@@ -193,9 +169,9 @@ class Window(pyglet.window.Window):
             currentX = groundPoses[getPos]
             currentY = groundPoses[getPos+1]
             getPos += 3
-            groundTopSide = LineString([(currentX-35, currentY+35),(currentX+35, currentY+29)])
+            groundTopSide = LineString([(currentX-35, currentY+35),(currentX+35, currentY+25)])
             groundLeftSide = LineString([(currentX-25, currentY+35),(currentX-35, currentY-35)])
-            groundBottomSide = LineString([(currentX-35, currentY-30),(currentX+35, currentY-35)])
+            groundBottomSide = LineString([(currentX-35, currentY-25),(currentX+35, currentY-35)])
             groundRightSide = LineString([(currentX+25, currentY-35),(currentX+35, currentY+35)])
             oppositeGroundTopSide = LineString([(currentX-35, currentY+29),(currentX+35, currentY+35)])
             oppositeGroundLeftSide = LineString([(currentX-35, currentY+35),(currentX-25, currentY-35)])
@@ -225,7 +201,30 @@ class Window(pyglet.window.Window):
                 if xVel < 0:
                     xVel = 0
 
-    def drawGround(dt):
+    def change_level(self):
+        global level, levelData, groundPoses, iteration, blockBatch
+        levelFile = "level" + str(level) + ".json"
+        with open(os.path.join(levelFolder,levelFile)) as data:
+            levelData = json.load(data)
+        block = 0
+        drawLevel = True
+        groundPoses = []
+        while block < len(levelData["ground"]):
+            blockX = levelData["ground"][block]["x"]
+            groundPoses.append(blockX)
+            blockY = levelData["ground"][block]["y"]
+            groundPoses.append(blockY)
+            blockTex = levelData["ground"][block]["tex"]
+            if blockTex == "dirt":
+                blockTex = dirtTexture
+            elif blockTex == "grass":
+                blockTex = groundTexture
+            blockTex.anchor_x = blockTex.width // 2
+            blockTex.anchor_y = blockTex.height // 2
+            groundPoses.append(blockTex)
+            block += 1
+
+    def draw_ground(dt):
         coord = 0
         groundSprite = pyglet.sprite.Sprite(groundTexture, group=background)
         for pos in groundPoses:
