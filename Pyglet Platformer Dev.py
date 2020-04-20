@@ -1,4 +1,4 @@
-import pyglet, os, datetime, random, math, shapely, json, time
+import pyglet, os, datetime, random, math, json, time, shapely
 from pyglet.window import key
 from pyglet import clock
 from random import randint
@@ -36,7 +36,7 @@ playerTextures.append(dirtTexture)
 for tex in playerTextures:
     tex.anchor_x = tex.width // 2
     tex.anchor_y = tex.height // 2
-playerSprite = pyglet.sprite.Sprite(playerStill, x=100, y=200, group=foreground)
+playerSprite = pyglet.sprite.Sprite(playerStill, x=35, y=106, group=foreground)
 icon1 = pyglet.resource.image("16x16.png")
 icon2 = pyglet.resource.image("32x32.png")
 
@@ -55,6 +55,10 @@ onFloor = True
 levelData = {}
 extras = False
 drawLevel = True
+playerMinX = -2000
+playerMaxX = 2000
+playerMaxY = 1000
+playerMinY = -1000
 
 # The game window
 class Window(pyglet.window.Window):
@@ -71,7 +75,7 @@ class Window(pyglet.window.Window):
         self.check_bounds(playerSprite)
 
     def on_draw(self):
-        global xVel, yVel, extras, drawLevel, blockBatch
+        global xVel, yVel, extras, drawLevel
         pyglet.clock.tick()
         skySprite.draw()
         self.draw_ground()
@@ -102,7 +106,7 @@ class Window(pyglet.window.Window):
                 extras = True
         pressedKeys[symbol] = True
 
-    def physics(dt, dts):
+    def physics(self, dt):
         global xVel, yVel, moving, onWallRight, onWallLeft, onFloor
         moving = False
         if key.W in pressedKeys or key.SPACE in pressedKeys:
@@ -119,8 +123,6 @@ class Window(pyglet.window.Window):
             xVel += 1
             playerSprite.image = playerRight
             moving = True
-        if (playerSprite.y) == 720:
-            playerSprite.y = 656
         xVel = xVel * 0.85
         yVel -= 0.25
         if yVel == -5:
@@ -134,22 +136,22 @@ class Window(pyglet.window.Window):
 
     def check_bounds(self, spriteNam):
         global xVel, yVel, level
-        min_x = 32
-        max_x = 1252
-        max_y = 682
-        if spriteNam.x < min_x:
-            spriteNam.x = min_x
+        screenMinX = 35
+        screenMaxX = 1245
+        screenMaxY = 677
+        if spriteNam.x < screenMinX:
+            spriteNam.x = screenMinX
             xVel = 0
-        elif spriteNam.x > max_x:
-            spriteNam.x = min_x
+        elif spriteNam.x > screenMaxX:
+            spriteNam.x = screenMinX
             level += 1
             self.change_level()
-        if spriteNam.y > max_y:
-            spriteNam.y = max_y
+        if spriteNam.y > screenMaxY:
+            spriteNam.y = screenMaxY
             yVel = 0
         if spriteNam.y < 35:
-            spriteNam.y = 103
-            spriteNam.x = min_x
+            spriteNam.y = 107
+            spriteNam.x = screenMinX
             yVel = 0
             xVel = 0
 
@@ -200,14 +202,13 @@ class Window(pyglet.window.Window):
                 playerSprite.x = currentX + 67
                 if xVel < 0:
                     xVel = 0
-
+        
     def change_level(self):
-        global level, levelData, groundPoses, iteration, blockBatch
+        global level, levelData, groundPoses, iteration
         levelFile = "level" + str(level) + ".json"
         with open(os.path.join(levelFolder,levelFile)) as data:
             levelData = json.load(data)
         block = 0
-        drawLevel = True
         groundPoses = []
         while block < len(levelData["ground"]):
             blockX = levelData["ground"][block]["x"]
