@@ -1,7 +1,5 @@
-import pyglet, os, datetime, random, math, json, time, shapely
+import pyglet, os, random, math, json, time, shapely
 from pyglet.window import key
-from pyglet import clock
-from random import randint
 from shapely.geometry import LineString, Point
 
 gameFolder = os.path.dirname(os.path.realpath(__file__))
