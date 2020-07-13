@@ -1,1 +1,0 @@
-py "pyglet platformer.py"
