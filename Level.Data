@@ -1,0 +1,10 @@
+{
+	"levels": [{
+		"StartingPos": [35, 105],
+		"Data": ["35,35,gr,Ground","105,35,gr,Ground","175,35,gr,Ground","245,35,gr,Ground","315,35,gr,Ground","385,35,gr,Ground","455,35,gr,Ground","525,35,gr,Ground","595,35,gr,Ground","665,35,gr,Ground","735,35,gr,Ground","805,35,gr,Ground","875,35,gr,Ground","945,35,gr,Ground","1015,35,gr,Ground","1085,35,gr,Ground","1155,35,gr,Ground","1225,35,gr,Ground","1295,35,gr,Ground"]
+	},
+	{
+		"StartingPos": [35, 105],
+		"Data": ["35,35,gr,Ground","105,35,gr,Ground","175,35,gr,Ground","245,35,gr,Ground","315,35,gr,Ground","385,35,gr,Ground","455,35,gr,Ground","525,35,gr,Ground","595,35,gr,Ground","665,35,gr,Ground","735,35,gr,Ground","735,105,gr,Ground","805,35,gr,Ground","875,35,gr,Ground","945,35,gr,Ground","1015,35,gr,Ground","1085,35,gr,Ground","1155,35,gr,Ground","1225,35,gr,Ground","1295,35,gr,Ground"]
+	}]
+}
