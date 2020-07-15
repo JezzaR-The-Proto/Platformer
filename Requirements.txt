@@ -1,2 +1,0 @@
-pyglet==1.4.9
-Shapely==1.7.0
