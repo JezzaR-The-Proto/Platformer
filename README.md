@@ -27,4 +27,6 @@ The `Data` key is for what tiles exist inside the level. This is an array and ea
 
 Currently supported textures are: `gr` for the default grass texture and `drt` for the default dirt texture.
 
+The name can be anything but if it is `Quicksand` the player will slowly sink into the ground instead of staying above it.
+
 ~~Yes there is no way to change level ingame shut up~~ If you change `self.CurrentLevel = 1` to whatever level you want inside the json array (Its the array index + 1) you can access whatever level you want.
